@@ -1,0 +1,11 @@
+{
+  "name": "oer-dashboard",
+  "version": "1.0.0",
+  "description": "OER Dashboard — Keystone Valuations & Falcon Capital",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {}
+}

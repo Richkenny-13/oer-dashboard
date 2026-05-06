@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OER Dashboard | Keystone Valuations & Falcon Capital</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--teal:#1B3A4B;--teal-l:#2A5570;--gold:#C5963A;--gold-l:#D4A94E;--bg:#F8F9FA;--text:#1A1A1A;--muted:#6B7280;--border:#E5E7EB;--green:#10B981;--yellow:#F59E0B;--orange:#F97316;--red:#EF4444}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:3px}
+#filter-bar{position:sticky;top:0;z-index:100;background:var(--teal);border-bottom:3px solid var(--gold);box-shadow:0 2px 12px rgba(0,0,0,.18)}
+.sel{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:4px;padding:6px 28px 6px 9px;cursor:pointer;width:100%;appearance:none;font-family:inherit;font-size:12px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center}
+.sel:focus{outline:none;border-color:var(--gold)}.sel option{background:var(--teal);color:#fff}
+.lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.6);margin-bottom:3px}
+.card{background:#fff;border-radius:8px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600}
+.badge-g{background:#ECFDF5;color:#065F46;border:1px solid #A7F3D0}
+.badge-y{background:#FFFBEB;color:#92400E;border:1px solid #FDE68A}
+.badge-o{background:#FFF7ED;color:#9A3412;border:1px solid #FDBA74}
+.badge-r{background:#FEF2F2;color:#991B1B;border:1px solid #FECACA}
+#admin-panel{position:fixed;top:0;right:-100%;width:min(920px,95vw);height:100vh;background:#fff;z-index:1000;box-shadow:-4px 0 24px rgba(0,0,0,.2);transition:right .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden}
+#admin-panel.open{right:0}
+#admin-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999;display:none;backdrop-filter:blur(2px)}
+#admin-overlay.show{display:block}
+.atab{padding:9px 14px;font-size:11px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s}
+.atab:hover{color:var(--teal)}.atab.active{color:var(--teal);border-bottom-color:var(--gold);font-weight:700}
+.ei{border:1px solid var(--border);border-radius:4px;padding:4px 8px;width:100%;font-size:12px;font-family:inherit;transition:border-color .15s}
+.ei:focus{outline:none;border-color:var(--teal)}.ei.inv{border-color:var(--red);background:#FEF2F2}
+#toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{padding:11px 18px;border-radius:6px;color:#fff;font-size:12px;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,.2);animation:tsin .2s ease-out;display:flex;align-items:center;gap:8px}
+.toast.ok{background:#059669}.toast.err{background:var(--red)}.toast.warn{background:var(--yellow);color:#1A1A1A}
+@keyframes tsin{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.btn-g{background:var(--gold);color:#fff;border:none;border-radius:5px;padding:8px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
+.btn-g:hover{background:var(--gold-l)}
+.btn-t{background:var(--teal);color:#fff;border:none;border-radius:5px;padding:7px 16px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:background .15s}
+.btn-t:hover{background:var(--teal-l)}
+.btn-s{background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:5px;padding:7px 14px;font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s}
+.btn-s:hover{border-color:var(--teal);color:var(--teal)}
+.btn-d{background:transparent;color:var(--red);border:1px solid var(--red);border-radius:5px;padding:5px 12px;font-size:11px;cursor:pointer;font-family:inherit;transition:all .15s}
+.btn-d:hover{background:var(--red);color:#fff}
+.sec-hdr{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--teal);background:#EBF4FF;padding:5px 10px;border-left:3px solid var(--teal)}
+.sticky-save{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--border);padding:10px 20px;display:flex;justify-content:flex-end;gap:8px;z-index:10}
+.wf-row{display:flex;align-items:center;gap:10px;margin-bottom:5px}
+.wf-lbl{width:148px;font-size:11px;color:var(--muted);flex-shrink:0;text-align:right}
+.wf-bar-bg{flex:1;background:#F3F4F6;border-radius:3px;height:20px;overflow:hidden}
+.wf-bar{height:100%;border-radius:3px;display:flex;align-items:center;min-width:4px;transition:width .4s}
+.wf-val{width:62px;font-size:11px;font-weight:700;text-align:right;flex-shrink:0}
+main{padding:16px 20px;max-width:1400px;margin:0 auto}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.g2{grid-template-columns:1fr}.fg{grid-template-columns:1fr 1fr !important}}
+@media print{#filter-bar,#admin-panel,#admin-overlay,#toast-container,.np{display:none!important}body{background:#fff}}
+.stale-banner{display:none;padding:9px 14px;border-radius:6px;margin-bottom:14px;font-size:12px;font-weight:500;align-items:center;gap:8px}
+#loading-screen{position:fixed;inset:0;background:var(--teal);z-index:9000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+.spin{width:32px;height:32px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- Loading Screen -->
+<div id="loading-screen">
+  <div style="font-size:18px;font-weight:800;color:#fff;letter-spacing:.04em">KEYSTONE VALUATIONS</div>
+  <div style="font-size:11px;color:var(--gold);font-weight:600;letter-spacing:.1em">OER DASHBOARD</div>
+  <div class="spin" style="margin-top:12px"></div>
+  <div id="load-status" style="font-size:11px;color:rgba(255,255,255,.6);margin-top:4px">Loading configuration...</div>
+</div>
+
+<div id="filter-bar">
+  <div style="padding:10px 20px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div>
+          <div style="font-size:13px;font-weight:800;color:#fff;letter-spacing:.02em">KEYSTONE VALUATIONS</div>
+          <div style="font-size:10px;color:var(--gold);font-weight:600;letter-spacing:.08em">OER DASHBOARD — COMMERCIAL REAL ESTATE</div>
+        </div>
+        <div style="width:1px;height:32px;background:rgba(255,255,255,.2)"></div>
+        <div id="data-badge" class="badge badge-g" style="cursor:pointer" onclick="openAdmin(0)">
+          <span id="dbdot" style="width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block"></span>
+          <span id="dbtext">Q2 2026 — Loading...</span>
+        </div>
+        <div id="sync-badge" style="display:none" class="badge" style="font-size:10px">&#9729; Synced</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="btn-s np" onclick="window.print()" style="color:rgba(255,255,255,.8);border-color:rgba(255,255,255,.3);padding:5px 11px;font-size:11px">&#9113; Print</button>
+        <button class="btn-s np" onclick="saveAnalysis()" style="color:rgba(255,255,255,.8);border-color:rgba(255,255,255,.3);padding:5px 11px;font-size:11px">&#128190; Save</button>
+        <button onclick="openAdmin()" style="background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);color:#fff;border-radius:5px;padding:6px 12px;cursor:pointer;font-size:12px;font-family:inherit" title="Admin Panel (Ctrl+,)">&#9881; Admin</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr 1fr auto auto;gap:8px;align-items:end" class="fg">
+      <div><div class="lbl">Property Type</div><select class="sel" id="f-pt" onchange="onPtChange()"><option value="multifamily">Multifamily</option><option value="office">Office</option><option value="retail">Retail</option><option value="industrial">Industrial</option><option value="hospitality">Hospitality</option></select></div>
+      <div><div class="lbl">Subtype</div><select class="sel" id="f-sub" onchange="calc()"></select></div>
+      <div><div class="lbl">State</div><select class="sel" id="f-state" onchange="calc()"></select></div>
+      <div><div class="lbl">Metro Tier</div><select class="sel" id="f-metro" onchange="calc()"><option value="t3">Tier 3 — Secondary</option><option value="t1">Tier 1 — Gateway</option><option value="t2">Tier 2 — Primary</option><option value="t4">Tier 4 — Tertiary</option></select></div>
+      <div><div class="lbl">Submarket</div><select class="sel" id="f-sm" onchange="calc()"><option value="suburban_prime">Suburban Prime</option><option value="cbd">CBD / Downtown</option><option value="urban_core">Urban Core</option><option value="suburban_secondary">Suburban Secondary</option><option value="rural">Rural / Exurban</option></select></div>
+      <div><div class="lbl">CAT Zone</div><select class="sel" id="f-cat" onchange="calc()"><option value="none">None / Standard</option><option value="hurricane_z1">Hurricane Zone 1</option><option value="hurricane_z2">Hurricane Zone 2</option><option value="wildfire">Wildfire WUI (CA)</option><option value="earthquake">Earthquake</option><option value="tornado">Tornado Alley</option></select></div>
+      <div><div class="lbl">Vintage</div><select class="sel" id="f-vint" onchange="calc()"><option value="mature">Mature (11-20yr)</option><option value="new">New (0-3yr)</option><option value="recent">Recent (4-10yr)</option><option value="aging">Aging (21-30yr)</option><option value="vintage">Vintage (30+yr)</option></select></div>
+      <div><div class="lbl">Class/Size</div><select class="sel" id="f-cls" onchange="calc()"><option value="medium">Medium</option><option value="small">Small</option><option value="large">Large</option><option value="institutional">Institutional</option></select></div>
+      <div style="display:flex;gap:6px"><button class="btn-g" onclick="calc()" style="padding:7px 16px;font-size:12px">Calculate</button><button class="btn-s" onclick="resetF()" style="color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.3);padding:7px 10px;font-size:12px">Reset</button></div>
+    </div>
+  </div>
+</div>
+
+<main>
+<div id="stale-banner" class="stale-banner"></div>
+<div id="edge-warn" style="display:none;margin-bottom:12px"></div>
+
+<div class="card" style="margin-bottom:16px;overflow:hidden">
+  <div style="background:var(--teal);padding:13px 20px;display:flex;align-items:center;justify-content:space-between">
+    <div>
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.6)">Operating Expense Ratio — Commercial Real Estate</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:1px">Excludes Payroll &amp; Benefits &bull; Server-synced config</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div id="conf-badge" class="badge badge-g" style="cursor:pointer" onclick="showConf()">95% Confidence</div>
+      <div id="fresh-badge" class="badge badge-g">Data Current</div>
+    </div>
+  </div>
+  <div style="padding:20px;display:grid;grid-template-columns:auto 1fr 1fr;gap:22px;align-items:start">
+    <div style="text-align:center;padding:16px 22px;background:#F8F9FA;border-radius:8px;border:1px solid var(--border)">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px">OER RANGE</div>
+      <div id="oer-hl" style="font-size:36px;font-weight:800;color:var(--teal);line-height:1;letter-spacing:-.02em">—</div>
+      <div style="margin-top:8px;display:flex;align-items:center;gap:8px;justify-content:center">
+        <div style="font-size:11px;color:var(--muted)">Most Probable:</div>
+        <div id="oer-mid" style="font-size:15px;font-weight:700;color:var(--gold)">—</div>
+      </div>
+      <div style="margin-top:8px">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Range Width</div>
+        <div style="background:#E5E7EB;border-radius:100px;height:6px;overflow:hidden;width:160px;margin:0 auto">
+          <div id="rbar" style="background:linear-gradient(90deg,var(--teal),var(--gold));height:100%;border-radius:100px;width:0%;transition:width .4s"></div>
+        </div>
+        <div id="rw-lbl" style="font-size:10px;color:var(--muted);margin-top:2px">— pp spread</div>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:11px;font-weight:700;color:var(--teal);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Adjustment Stack</div>
+      <div id="wf-cont"></div>
+    </div>
+    <div>
+      <div style="font-size:11px;font-weight:700;color:var(--teal);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em">Scenario Analysis</div>
+      <div id="scen-grid"></div>
+      <div style="margin-top:10px;padding:10px;background:#F8F9FA;border-radius:6px;border:1px solid var(--border)">
+        <div style="font-size:10px;font-weight:600;color:var(--muted);margin-bottom:6px">WHAT-IF: PROPERTY CLASS</div>
+        <div style="display:flex;gap:6px">
+          <button onclick="setCM(-2)" class="btn-s" style="font-size:11px;padding:4px 8px;flex:1" id="wif-d">Discount (-2pp)</button>
+          <button onclick="setCM(0)"  class="btn-t" style="font-size:11px;padding:4px 8px;flex:1" id="wif-b">Base</button>
+          <button onclick="setCM(2)"  class="btn-s" style="font-size:11px;padding:4px 8px;flex:1" id="wif-p">Premium (+2pp)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="background:#FFFBEB;border-top:1px solid #FDE68A;padding:6px 20px">
+    <span style="font-size:11px;color:#92400E"><strong>Disclaimer:</strong> Ratios exclude payroll, benefits, and debt service. Expressed as % of EGI. Verify against current IREM/BOMA reports for final underwriting.</span>
+  </div>
+</div>
+
+<div class="g2" style="margin-bottom:16px">
+  <div class="card" style="padding:16px">
+    <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px;display:flex;justify-content:space-between">
+      Six-Category Breakdown <span style="font-size:10px;font-weight:400;color:var(--muted);text-transform:none">% of Total OER</span>
+    </div>
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center">
+      <canvas id="pie-chart" width="155" height="155"></canvas>
+      <div id="cat-tbl"></div>
+    </div>
+  </div>
+  <div class="card" style="padding:16px">
+    <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px">Market Comparison</div>
+    <div id="cmp-grid"></div>
+  </div>
+</div>
+
+<div class="card" style="padding:16px;margin-bottom:16px">
+  <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">Q2 2026 Market Conditions</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px" id="mkt-notes"></div>
+</div>
+
+<!-- API Docs Quick Reference -->
+<div class="card" style="padding:16px;margin-bottom:16px;border-left:4px solid var(--gold)">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.05em">REST API Quick Reference</div>
+    <button class="btn-s" style="font-size:11px;padding:3px 10px" onclick="document.getElementById('api-docs').classList.toggle('hidden')">Toggle</button>
+  </div>
+  <div id="api-docs">
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12px;font-family:monospace">
+      <span style="color:var(--green);font-weight:700">GET</span><span style="color:var(--muted)">/api/health</span>
+      <span style="color:var(--green);font-weight:700">GET</span><span style="color:var(--muted)">/api/property-types</span>
+      <span style="color:var(--gold);font-weight:700">POST</span><span style="color:var(--muted)">/api/calculate &nbsp;<span style="font-size:10px;background:#F3F4F6;padding:1px 6px;border-radius:3px;font-family:sans-serif">x-api-key required</span></span>
+      <span style="color:var(--green);font-weight:700">GET</span><span style="color:var(--muted)">/api/config</span>
+      <span style="color:var(--teal);font-weight:700">PUT</span><span style="color:var(--muted)">/api/config &nbsp;<span style="font-size:10px;background:#F3F4F6;padding:1px 6px;border-radius:3px;font-family:sans-serif">x-admin-password required</span></span>
+    </div>
+    <div style="margin-top:10px;padding:10px;background:#F8F9FA;border-radius:5px;font-family:monospace;font-size:11px;color:var(--muted)">
+      <div style="color:var(--teal);font-weight:600;margin-bottom:5px">// Example: Calculate OER</div>
+      <div>POST /api/calculate</div>
+      <div>x-api-key: YOUR_KEY</div>
+      <div>{</div>
+      <div>&nbsp;&nbsp;"propertyType": "multifamily",</div>
+      <div>&nbsp;&nbsp;"subtype": "Class B (built 1980-2000)",</div>
+      <div>&nbsp;&nbsp;"state": "TX", "metroTier": "t3",</div>
+      <div>&nbsp;&nbsp;"submarket": "suburban_prime",</div>
+      <div>&nbsp;&nbsp;"catZone": "none", "vintage": "mature",</div>
+      <div>&nbsp;&nbsp;"propertyClass": "medium"</div>
+      <div>}</div>
+    </div>
+  </div>
+</div>
+
+<div id="saved-sec" class="card" style="padding:16px;margin-bottom:16px;display:none">
+  <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
+    Recent Analyses <button class="btn-s" style="font-size:11px;padding:3px 10px" onclick="document.getElementById('saved-sec').style.display='none'">Hide</button>
+  </div>
+  <div id="saved-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px"></div>
+</div>
+</main>
+
+<div id="admin-overlay" onclick="closeAdmin()"></div>
+<div id="admin-panel">
+  <div style="background:var(--teal);padding:13px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+    <div>
+      <div style="font-size:14px;font-weight:700;color:#fff">Admin Panel</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.6)" id="admin-sync-status">Config synced to server &#9729;</div>
+    </div>
+    <button onclick="closeAdmin()" style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:4px;padding:5px 12px;cursor:pointer;font-size:13px;font-family:inherit">&#10005; Close</button>
+  </div>
+  <div style="background:#FFFBEB;border-bottom:1px solid #FDE68A;padding:9px 20px;font-size:11px;flex-shrink:0">
+    <strong style="color:#92400E">&#128203; Quarterly Update Guide:</strong>
+    <span style="color:#78350F"> Tab 1: Set quarter &rarr; Tab 2: Base ranges &rarr; Tab 5: CAT loads &rarr; Tab 8: Market notes &rarr; Tab 9: Export backup &rarr; ~15 min</span>
+  </div>
+  <!-- Admin password prompt -->
+  <div id="admin-auth-bar" style="background:#FEF2F2;border-bottom:1px solid #FECACA;padding:8px 20px;display:flex;align-items:center;gap:10px;flex-shrink:0">
+    <span style="font-size:11px;color:#991B1B;font-weight:600">&#128274; Admin Password Required to Save Changes:</span>
+    <input type="password" id="admin-pwd" class="ei" placeholder="Enter admin password" style="width:220px;padding:5px 10px;font-size:12px">
+    <button class="btn-t" style="font-size:11px;padding:5px 14px" onclick="checkAdminPwd()">Unlock</button>
+    <span id="admin-auth-status" style="font-size:11px;color:var(--muted)"></span>
+  </div>
+  <div style="display:flex;overflow-x:auto;border-bottom:1px solid var(--border);flex-shrink:0;background:#FAFAFA">
+    <div class="atab active" onclick="sATab(0)">1. Data Currency</div>
+    <div class="atab" onclick="sATab(1)">2. Base OER Ranges</div>
+    <div class="atab" onclick="sATab(2)">3. State Adjustments</div>
+    <div class="atab" onclick="sATab(3)">4. Metro Tiers</div>
+    <div class="atab" onclick="sATab(4)">5. CAT Zones</div>
+    <div class="atab" onclick="sATab(5)">6. Vintage Adj.</div>
+    <div class="atab" onclick="sATab(6)">7. Allocations</div>
+    <div class="atab" onclick="sATab(7)">8. Market Notes</div>
+    <div class="atab" onclick="sATab(8)">9. Import/Export</div>
+    <div class="atab" onclick="sATab(9)">10. Reminders</div>
+  </div>
+  <div style="flex:1;overflow-y:auto" id="admin-body"></div>
+</div>
+
+<div id="conf-modal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.5);align-items:center;justify-content:center">
+  <div class="card" style="width:440px;max-width:95vw;padding:20px;max-height:80vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:14px;font-weight:700;color:var(--teal)">Confidence Score Detail</div>
+      <button onclick="document.getElementById('conf-modal').style.display='none'" class="btn-s" style="padding:4px 10px">&#10005;</button>
+    </div>
+    <div id="conf-det"></div>
+  </div>
+</div>
+<div id="save-modal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.5);align-items:center;justify-content:center">
+  <div class="card" style="width:380px;max-width:95vw;padding:20px">
+    <div style="font-size:14px;font-weight:700;color:var(--teal);margin-bottom:14px">Save Analysis</div>
+    <div style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px">Analysis Name</div>
+      <input type="text" id="save-name" class="ei" style="font-size:13px;padding:8px 10px" placeholder="e.g. Dallas Class B MF — 123 Main St">
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn-s" onclick="document.getElementById('save-modal').style.display='none'">Cancel</button>
+      <button class="btn-g" onclick="confirmSave()">Save Analysis</button>
+    </div>
+  </div>
+</div>
+<div id="toast-container"></div>
+
+<script>
+// ============================================================
+// SERVER CONFIG — fetched from /api/config on load
+// Admin saves push to /api/config via PUT
+// Calculations run client-side using fetched config (fast)
+// ============================================================
+
+let cfg = {};
+let CM = 0, LR = null, aTab = 0, pieInst = null;
+let adminUnlocked = false;
+
+function jc(o){ return JSON.parse(JSON.stringify(o)); }
+
+// ---- Storage: server-first, localStorage fallback ----
+const LS = {
+  get(k){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):null; }catch{ return null; }},
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch{} }
+};
+
+async function loadServerConfig(){
+  document.getElementById('load-status').textContent = 'Fetching config from server...';
+  try {
+    const res = await fetch('/api/config', { headers: { 'Cache-Control': 'no-cache' } });
+    if (!res.ok) throw new Error('Server returned ' + res.status);
+    const data = await res.json();
+    cfg = data;
+    delete cfg._meta;
+    LS.set('oer-cfg-cache', cfg);  // local cache for offline fallback
+    document.getElementById('admin-sync-status').textContent = 'Config synced from server ☁';
+    return true;
+  } catch(e) {
+    document.getElementById('load-status').textContent = 'Server unavailable — using cached config';
+    const cached = LS.get('oer-cfg-cache');
+    if (cached) { cfg = cached; return true; }
+    return false;
+  }
+}
+
+async function saveConfigSection(key, value){
+  LS.set('oer-cfg-cache', { ...cfg, [key]: value });
+  const pwd = document.getElementById('admin-pwd')?.value || '';
+  const res = await fetch('/api/config', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'x-admin-password': pwd },
+    body: JSON.stringify({ key, value })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Server error');
+  }
+  cfg[key] = value;
+  document.getElementById('admin-sync-status').textContent = `Saved to server at ${new Date().toLocaleTimeString()} ☁`;
+}
+
+// ---- Admin password ----
+function checkAdminPwd(){
+  const pwd = document.getElementById('admin-pwd').value;
+  if (!pwd) { document.getElementById('admin-auth-status').textContent = 'Enter password'; return; }
+  // Test with a lightweight PUT
+  fetch('/api/config', {
+    method: 'PUT', headers: { 'Content-Type': 'application/json', 'x-admin-password': pwd },
+    body: JSON.stringify({ key: 'dataCurrency', value: cfg.dataCurrency })
+  }).then(async r => {
+    if (r.ok) {
+      adminUnlocked = true;
+      document.getElementById('admin-auth-bar').style.background = '#ECFDF5';
+      document.getElementById('admin-auth-bar').style.borderColor = '#A7F3D0';
+      document.getElementById('admin-auth-status').textContent = '✓ Unlocked';
+      document.getElementById('admin-auth-status').style.color = '#059669';
+    } else {
+      document.getElementById('admin-auth-status').textContent = '✗ Wrong password';
+      document.getElementById('admin-auth-status').style.color = 'var(--red)';
+    }
+  });
+}
+
+// ---- State dropdown ----
+function popStates(){
+  const s = document.getElementById('f-state');
+  s.innerHTML = Object.entries(cfg.stateAdj||{}).sort((a,b)=>a[1].name.localeCompare(b[1].name))
+    .map(([k,v]) => `<option value="${k}">${v.name}</option>`).join('');
+  s.value = 'TX';
+}
+
+function onPtChange(){
+  const pt = document.getElementById('f-pt').value;
+  const r = (cfg.baseRanges||{})[pt] || {};
+  document.getElementById('f-sub').innerHTML = Object.keys(r).map(k=>`<option value="${k}">${k}</option>`).join('');
+  calc();
+}
+
+// ============================================================
+// CALC ENGINE (client-side, using server-fetched cfg)
+// ============================================================
+function calc(){
+  const pt  = document.getElementById('f-pt').value;
+  const sub = document.getElementById('f-sub').value;
+  const st  = document.getElementById('f-state').value;
+  const mt  = document.getElementById('f-metro').value;
+  const sm  = document.getElementById('f-sm').value;
+  const cat = document.getElementById('f-cat').value;
+  const vnt = document.getElementById('f-vint').value;
+  const cls = document.getElementById('f-cls').value;
+
+  if (!cfg.baseRanges) return;
+  const rng = cfg.baseRanges[pt]; if (!rng || !rng[sub]) return;
+  const base = rng[sub];
+  const saAdj  = (cfg.stateAdj||{})[st]  || { low:0, high:0 };
+  const mtAdj  = (cfg.metroTiers||{})[mt] || { low:0, high:0 };
+  const smAdj  = (cfg.submarkets||{})[sm] || { low:0, high:0 };
+  const catAdj = (cfg.catZones||{})[cat]  || { low:2, high:3 };
+  const vaAdj  = (cfg.vintageAdj||{})[vnt]|| { low:0, high:0 };
+  const clsM   = { small:1, medium:0, large:-1, institutional:-2 }[cls] || 0;
+
+  let lo = base.low  + saAdj.low  + mtAdj.low  + smAdj.low  + catAdj.low  + vaAdj.low  + clsM + CM;
+  let hi = base.high + saAdj.high + mtAdj.high + smAdj.high + catAdj.high + vaAdj.high + clsM + CM;
+  lo = Math.max(0, lo); hi = Math.max(lo, hi);
+  const mid = (lo+hi)/2, rw = hi-lo;
+
+  let conf = 95;
+  if(rw>12)conf-=12; else if(rw>8)conf-=6; else if(rw>5)conf-=2;
+  const mos = mosSince((cfg.dataCurrency||{}).lastUpdated);
+  let sp=0; if(mos>12)sp=15; else if(mos>9)sp=10; else if(mos>6)sp=5;
+  conf = Math.max(45, conf-sp);
+
+  LR = { lo, hi, mid, rw, conf, mos, sp,
+    inp:{pt,sub,st,mt,sm,cat,vnt,cls},
+    adj:{base,saAdj,mtAdj,smAdj,catAdj,vaAdj,clsM,CM} };
+
+  renderRes(LR); checkEdge(LR); updBadge(mos); addRecent(LR);
+}
+
+function mosSince(ds){
+  try{ const d=new Date(ds),n=new Date(); return(n.getFullYear()-d.getFullYear())*12+(n.getMonth()-d.getMonth()); }catch{ return 0; }
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function renderRes(r){
+  document.getElementById('oer-hl').innerHTML = `${r.lo.toFixed(1)}% &ndash; ${r.hi.toFixed(1)}%`;
+  document.getElementById('oer-mid').textContent = r.mid.toFixed(1)+'%';
+  document.getElementById('rbar').style.width = Math.min(100,Math.max(5,(r.rw/30)*100))+'%';
+  document.getElementById('rw-lbl').textContent = r.rw.toFixed(1)+' pp spread';
+  const cb=document.getElementById('conf-badge');
+  cb.textContent=r.conf+'% Confidence';
+  cb.className='badge '+(r.conf>=90?'badge-g':r.conf>=70?'badge-y':'badge-r');
+  renderWF(r); renderScen(r); renderPie(r); renderCmp(r);
+}
+
+function renderWF(r){
+  const {base,saAdj,mtAdj,smAdj,catAdj,vaAdj,clsM,CM:cm}=r.adj;
+  const items=[
+    {l:'Base Range',lo:base.low,hi:base.high,c:'#1B3A4B'},
+    {l:'State Adj.',lo:saAdj.low,hi:saAdj.high,c:'#2A6496'},
+    {l:'Metro Tier',lo:mtAdj.low,hi:mtAdj.high,c:'#C5963A'},
+    {l:'Submarket',lo:smAdj.low,hi:smAdj.high,c:'#059669'},
+    {l:'CAT Zone',lo:catAdj.low,hi:catAdj.high,c:'#DC2626'},
+    {l:'Vintage',lo:vaAdj.low,hi:vaAdj.high,c:'#7C3AED'},
+    {l:'Class Mod.',lo:clsM+cm,hi:clsM+cm,c:'#0369A1'}
+  ];
+  const mx=Math.max(...items.map(i=>Math.max(Math.abs(i.lo),Math.abs(i.hi))),1);
+  let h=items.map(i=>{
+    const neg=i.hi<0,mag=Math.max(Math.abs(i.lo),Math.abs(i.hi));
+    const w=Math.max(4,Math.round((mag/mx)*100));
+    const col=neg?'#10B981':mag>0?i.c:'#9CA3AF';
+    const lbl=i.lo===i.hi?`${i.lo>=0?'+':''}${i.lo.toFixed(1)}`:`${i.lo>=0?'+':''}${i.lo.toFixed(1)} to ${i.hi>=0?'+':''}${i.hi.toFixed(1)}`;
+    return`<div class="wf-row"><div class="wf-lbl">${i.l}</div><div class="wf-bar-bg"><div class="wf-bar" style="width:${w}%;background:${col}"></div></div><div class="wf-val" style="color:${neg?'#059669':mag>0?'var(--red)':'var(--muted)'}">${lbl}</div></div>`;
+  }).join('');
+  h+=`<div class="wf-row" style="border-top:2px solid var(--border);margin-top:5px;padding-top:5px"><div class="wf-lbl" style="color:var(--teal);font-weight:700">= Final Range</div><div class="wf-bar-bg"><div class="wf-bar" style="width:70%;background:var(--teal)"></div></div><div class="wf-val" style="color:var(--teal);font-weight:700">${r.lo.toFixed(1)}-${r.hi.toFixed(1)}%</div></div>`;
+  document.getElementById('wf-cont').innerHTML=h;
+}
+
+function renderScen(r){
+  const s=[{n:'Best Case',v:(r.lo-1.5).toFixed(1),c:'var(--green)',d:'Favorable ops conditions'},{n:'Most Probable',v:r.mid.toFixed(1),c:'var(--teal)',d:'Base underwriting estimate',b:true},{n:'Stress Case',v:(r.hi+2).toFixed(1),c:'var(--red)',d:'Adverse conditions'}];
+  document.getElementById('scen-grid').innerHTML=s.map(x=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 10px;border-radius:5px;margin-bottom:4px;background:${x.b?'#F0F7FF':'#F8F9FA'};border:1px solid ${x.b?'#BFDBFE':'var(--border)'}"><div><div style="font-size:12px;font-weight:${x.b?700:500}">${x.n}</div><div style="font-size:10px;color:var(--muted)">${x.d}</div></div><div style="font-size:18px;font-weight:800;color:${x.c}">${x.v}%</div></div>`).join('');
+}
+
+function renderPie(r){
+  const pt=r.inp.pt;const al=(cfg.allocations||{})[pt]||{taxes:35,insurance:12,management:12,utilities:18,maintenance:15,reserves:8};
+  const cats=[{n:'Property Taxes',p:al.taxes,c:'#1B3A4B'},{n:'Insurance',p:al.insurance,c:'#C5963A'},{n:'Mgmt & Admin',p:al.management,c:'#10B981'},{n:'Utilities',p:al.utilities,c:'#3B82F6'},{n:'Maintenance',p:al.maintenance,c:'#8B5CF6'},{n:'Reserves',p:al.reserves,c:'#F97316'}];
+  if(pieInst)pieInst.destroy();
+  const ctx=document.getElementById('pie-chart').getContext('2d');
+  pieInst=new Chart(ctx,{type:'doughnut',data:{labels:cats.map(c=>c.n),datasets:[{data:cats.map(c=>c.p),backgroundColor:cats.map(c=>c.c),borderWidth:2,borderColor:'#fff'}]},options:{responsive:false,plugins:{legend:{display:false}},cutout:'62%'}});
+  document.getElementById('cat-tbl').innerHTML=cats.map(c=>`<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px"><div style="width:10px;height:10px;border-radius:2px;background:${c.c};flex-shrink:0"></div><div style="flex:1;font-size:11px">${c.n}</div><div style="font-size:11px;font-weight:700;color:var(--teal);width:32px;text-align:right">${c.p}%</div><div style="font-size:10px;color:var(--muted);width:40px;text-align:right">${((c.p/100)*r.mid).toFixed(1)}pp</div></div>`).join('');
+}
+
+function renderCmp(r){
+  const br=cfg.baseRanges||{};const natl=(br[r.inp.pt]||{})[r.inp.sub]||{low:25,high:35};
+  const na=(natl.low+natl.high)/2,stA=na+(r.adj.saAdj.low+r.adj.saAdj.high)/2,mtA=stA+(r.adj.mtAdj.low+r.adj.mtAdj.high)/2;
+  const rows=[{l:'This Property',v:r.mid,b:true},{l:'Metro Avg',v:mtA},{l:'State Avg',v:stA},{l:'National Avg',v:na}];
+  const mx=Math.max(...rows.map(x=>x.v),1);
+  document.getElementById('cmp-grid').innerHTML=rows.map(row=>`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;font-weight:${row.b?700:400};color:${row.b?'var(--teal)':'var(--text)'}">${row.l}</span><span style="font-size:13px;font-weight:${row.b?800:600};color:${row.b?'var(--gold)':'var(--text)'}">${row.v.toFixed(1)}%</span></div><div style="background:#E5E7EB;border-radius:100px;height:7px;overflow:hidden"><div style="background:${row.b?'linear-gradient(90deg,var(--teal),var(--gold))':'#9CA3AF'};height:100%;border-radius:100px;width:${Math.max(5,Math.round((row.v/mx)*100))}%;transition:width .4s"></div></div></div>`).join('');
+}
+
+function renderMktNotes(){
+  const n=cfg.marketNotes||{};
+  const items=[{ic:'🏠',t:'Insurance Market',tx:n.insurance||''},{ic:'⚡',t:'Utility Trends',tx:n.utilities||''},{ic:'📋',t:'Property Tax',tx:n.propertyTax||''},{ic:'🔧',t:'Maintenance',tx:n.maintenance||''}];
+  document.getElementById('mkt-notes').innerHTML=items.map(i=>`<div style="background:#F8F9FA;border:1px solid var(--border);border-radius:6px;padding:12px"><div style="font-size:12px;font-weight:700;color:var(--teal);margin-bottom:5px">${i.ic} ${i.t}</div><div style="font-size:11px;color:var(--muted);line-height:1.5">${i.tx}</div></div>`).join('');
+}
+
+function updBadge(m){
+  if(m===undefined)m=mosSince((cfg.dataCurrency||{}).lastUpdated);
+  const b=document.getElementById('data-badge'),dot=document.getElementById('dbdot'),txt=document.getElementById('dbtext');
+  const fb=document.getElementById('fresh-badge'),bn=document.getElementById('stale-banner');
+  const q=(cfg.dataCurrency||{}).quarter||'Q?',y=(cfg.dataCurrency||{}).year||2026;
+  if(m<=3){b.className='badge badge-g';dot.style.background='var(--green)';txt.textContent=`${q} ${y} — Current`;fb.className='badge badge-g';fb.textContent='Data Current';bn.style.display='none';}
+  else if(m<=6){b.className='badge badge-y';dot.style.background='var(--yellow)';txt.textContent=`${q} ${y} — Update Recommended`;fb.className='badge badge-y';fb.textContent='1 Qtr Old';bn.style.cssText='display:flex;background:#FFFBEB;border:1px solid #FDE68A;color:#92400E;margin-bottom:14px;padding:8px 14px;border-radius:6px;font-size:12px;align-items:center;gap:8px';bn.innerHTML='&#9888; Data ~1 quarter old. <button onclick="openAdmin(0)" class="btn-s" style="font-size:11px;padding:2px 8px;margin-left:6px">Update</button>';}
+  else if(m<=9){b.className='badge badge-o';dot.style.background='var(--orange)';txt.textContent=`${q} ${y} — Update Needed`;fb.className='badge badge-o';fb.textContent='2 Qtrs Old';bn.style.cssText='display:flex;background:#FFF7ED;border:1px solid #FDBA74;color:#9A3412;margin-bottom:14px;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:600;align-items:center;gap:8px';bn.innerHTML='&#9888; Data 2+ quarters old. Confidence reduced. <button onclick="openAdmin(0)" class="btn-s" style="font-size:11px;padding:2px 8px;margin-left:6px">Update Now</button>';}
+  else{b.className='badge badge-r';dot.style.background='var(--red)';txt.textContent=`${q} ${y} — STALE`;fb.className='badge badge-r';fb.textContent='&#9888; Stale';bn.style.cssText='display:flex;background:#FEF2F2;border:1px solid #FECACA;color:#991B1B;margin-bottom:14px;padding:10px 14px;border-radius:6px;font-size:13px;font-weight:700;align-items:center;gap:8px';bn.innerHTML='&#128680; Data 9+ months old. Confidence significantly reduced. <button onclick="openAdmin(0)" style="margin-left:8px;background:var(--red);color:#fff;border:none;border-radius:4px;padding:4px 12px;cursor:pointer;font-size:12px;font-family:inherit">Update Now</button>';}
+}
+
+function checkEdge(r){
+  const ew=document.getElementById('edge-warn'),ws=[];
+  if(r.inp.sub.includes('Class C')&&r.inp.vnt==='new')ws.push({t:'warn',m:'Unusual: New construction + Class C. Verify inputs.'});
+  if(r.conf<70)ws.push({t:'err',m:`Low confidence (${r.conf}%). Manual verification required before IC presentation.`});
+  if(r.hi>60)ws.push({t:'warn',m:`High OER (${r.hi.toFixed(1)}%). Review adjustment stack.`});
+  if(ws.length){ew.style.display='block';ew.innerHTML=ws.map(w=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:5px;margin-bottom:4px;background:${w.t==='err'?'#FEF2F2':'#FFFBEB'};border:1px solid ${w.t==='err'?'#FECACA':'#FDE68A'}"><span>${w.t==='err'?'&#128683;':'&#9888;'}</span><span style="font-size:12px;color:${w.t==='err'?'#991B1B':'#92400E'}">${w.m}</span></div>`).join('');}
+  else ew.style.display='none';
+}
+
+function setCM(v){
+  CM=v;
+  [[-2,'d'],[0,'b'],[2,'p']].forEach(([val,id])=>{const b=document.getElementById('wif-'+id);b.className=v===val?'btn-t':'btn-s';b.style.cssText='font-size:11px;padding:4px 8px;flex:1';});
+  calc();
+}
+
+function resetF(){
+  document.getElementById('f-pt').value='multifamily';onPtChange();
+  setTimeout(()=>{
+    const st=document.getElementById('f-sub');for(let o of st.options){if(o.text.includes('Class B (built 1980')){st.value=o.value;break;}}
+    document.getElementById('f-state').value='TX';document.getElementById('f-metro').value='t3';document.getElementById('f-sm').value='suburban_prime';document.getElementById('f-cat').value='none';document.getElementById('f-vint').value='mature';document.getElementById('f-cls').value='medium';
+    CM=0;setCM(0);calc();
+  },30);
+}
+
+function showConf(){
+  if(!LR)return;
+  const r=LR;const items=[{f:'Base Confidence',v:95,n:'Starting score'},{f:'Range Width',v:r.rw>12?-12:r.rw>8?-6:r.rw>5?-2:0,n:`${r.rw.toFixed(1)}pp spread`},{f:'Data Freshness',v:-r.sp,n:`${r.mos} months old`}];
+  document.getElementById('conf-det').innerHTML=`<table style="width:100%;font-size:12px;border-collapse:collapse"><thead><tr style="background:#F8F9FA"><th style="padding:7px 10px;text-align:left;border-bottom:1px solid var(--border)">Factor</th><th style="padding:7px;text-align:right;border-bottom:1px solid var(--border)">Points</th><th style="padding:7px 10px;text-align:left;border-bottom:1px solid var(--border)">Note</th></tr></thead><tbody>${items.map(i=>`<tr><td style="padding:7px 10px;border-bottom:1px solid var(--border)">${i.f}</td><td style="padding:7px;text-align:right;font-weight:700;color:${i.v>=0?'var(--green)':'var(--red)'};border-bottom:1px solid var(--border)">${i.v>=0?'+':''}${i.v}</td><td style="padding:7px 10px;color:var(--muted);border-bottom:1px solid var(--border)">${i.n}</td></tr>`).join('')}</tbody><tfoot><tr style="background:#F8F9FA"><td style="padding:8px 10px;font-weight:700">Final Score</td><td style="padding:8px;text-align:right;font-weight:800;font-size:15px;color:${r.conf>=90?'var(--green)':r.conf>=70?'var(--yellow)':'var(--red)'}">${r.conf}%</td><td style="padding:8px 10px;color:var(--muted)">${r.conf>=90?'High — suitable for IC presentation':r.conf>=70?'Moderate — note limitations':'Low — verify manually'}</td></tr></tfoot></table>`;
+  document.getElementById('conf-modal').style.display='flex';
+}
+
+function saveAnalysis(){document.getElementById('save-name').value=LR?`${LR.inp.sub} — ${(cfg.stateAdj||{})[LR.inp.st]?.name||LR.inp.st}`:'';document.getElementById('save-modal').style.display='flex';}
+function confirmSave(){const nm=document.getElementById('save-name').value.trim();if(!nm){toast('Enter a name','err');return;}const sv=LS.get('oer-saved')||[];sv.unshift({id:Date.now(),name:nm,date:new Date().toLocaleDateString(),r:LR});if(sv.length>50)sv.pop();LS.set('oer-saved',sv);document.getElementById('save-modal').style.display='none';toast('Saved: '+nm,'ok');loadSaved();}
+function loadSaved(){const sv=LS.get('oer-saved')||[];if(!sv.length){document.getElementById('saved-sec').style.display='none';return;}document.getElementById('saved-sec').style.display='block';document.getElementById('saved-list').innerHTML=sv.slice(0,8).map(s=>`<div style="background:#F8F9FA;border:1px solid var(--border);border-radius:6px;padding:10px;cursor:pointer" onclick="loadAn(${s.id})"><div style="font-size:12px;font-weight:600;color:var(--teal)">${s.name}</div><div style="font-size:10px;color:var(--muted);margin-top:2px">${s.date}${s.r?' · '+s.r.lo.toFixed(1)+'–'+s.r.hi.toFixed(1)+'%':''}</div></div>`).join('');}
+function loadAn(id){const sv=LS.get('oer-saved')||[];const s=sv.find(x=>x.id==id);if(!s||!s.r)return;const i=s.r.inp;document.getElementById('f-pt').value=i.pt;onPtChange();setTimeout(()=>{document.getElementById('f-sub').value=i.sub;document.getElementById('f-state').value=i.st;document.getElementById('f-metro').value=i.mt;document.getElementById('f-sm').value=i.sm;document.getElementById('f-cat').value=i.cat;document.getElementById('f-vint').value=i.vnt;document.getElementById('f-cls').value=i.cls;calc();},50);}
+function addRecent(r){const rc=LS.get('oer-recent')||[];rc.unshift({ts:Date.now(),r});if(rc.length>20)rc.pop();LS.set('oer-recent',rc);}
+function toast(msg,type='ok'){const c=document.getElementById('toast-container');const t=document.createElement('div');t.className=`toast ${type}`;t.innerHTML=`<span>${type==='ok'?'&#10003;':type==='err'?'&#10007;':'&#9888;'}</span>${msg}`;c.appendChild(t);setTimeout(()=>t.remove(),3200);}
+
+// ============================================================
+// ADMIN PANEL — saves push to /api/config
+// ============================================================
+function openAdmin(tab){ document.getElementById('admin-panel').classList.add('open');document.getElementById('admin-overlay').classList.add('show');if(tab!==undefined&&typeof tab==='number')aTab=tab;renderABody(aTab);document.querySelectorAll('.atab').forEach((t,i)=>t.classList.toggle('active',i===aTab));}
+function closeAdmin(){document.getElementById('admin-panel').classList.remove('open');document.getElementById('admin-overlay').classList.remove('show');}
+function sATab(i){aTab=i;document.querySelectorAll('.atab').forEach((t,j)=>t.classList.toggle('active',j===i));renderABody(i);}
+function renderABody(i){const bd=document.getElementById('admin-body');const fns=[aT1,aT2,aT3,aT4,aT5,aT6,aT7,aT8,aT9,aT10];if(fns[i])fns[i](bd);}
+
+async function saveSection(key, value) {
+  try {
+    await saveConfigSection(key, value);
+    toast(`${key} saved to server`, 'ok');
+  } catch(e) {
+    toast(`Save failed: ${e.message}`, 'err');
+  }
+}
+
+function aT1(b){const dc=cfg.dataCurrency||{};b.innerHTML=`<div style="padding:20px"><div class="sec-hdr" style="margin-bottom:16px">Data Currency Settings</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px"><div><div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px">Quarter</div><select class="ei" id="a-q" style="padding:7px 10px">${['Q1','Q2','Q3','Q4'].map(q=>`<option ${dc.quarter===q?'selected':''}>${q}</option>`).join('')}</select></div><div><div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px">Year</div><select class="ei" id="a-y" style="padding:7px 10px">${[2024,2025,2026,2027,2028].map(y=>`<option ${dc.year===y?'selected':''}>${y}</option>`).join('')}</select></div></div><div style="margin-bottom:14px"><div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px">Last Updated</div><input type="date" class="ei" id="a-lu" value="${dc.lastUpdated||''}" style="padding:7px 10px"></div><div style="margin-bottom:20px"><div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px">Data Source Notes</div><textarea class="ei" id="a-src" rows="3" style="padding:8px;resize:vertical">${dc.source||''}</textarea></div></div><div class="sticky-save"><button class="btn-g" onclick="svT1()" style="padding:9px 24px">&#10003; Mark as Updated &amp; Save</button></div>`;}
+async function svT1(){const v={quarter:document.getElementById('a-q').value,year:parseInt(document.getElementById('a-y').value),lastUpdated:document.getElementById('a-lu').value,source:document.getElementById('a-src').value};await saveSection('dataCurrency',v);cfg.dataCurrency=v;updBadge();}
+
+function aT2(b){const pts=['multifamily','office','retail','industrial','hospitality'];let h=`<div style="padding:20px">`;pts.forEach(pt=>{const rng=cfg.baseRanges[pt]||{};h+=`<div style="margin-bottom:20px"><div class="sec-hdr" style="margin-bottom:8px">${pt.toUpperCase()}</div><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:#F8F9FA"><th style="padding:6px 10px;border:1px solid var(--border)">Subtype</th><th style="padding:6px;text-align:center;border:1px solid var(--border);width:80px">Low%</th><th style="padding:6px;text-align:center;border:1px solid var(--border);width:80px">High%</th><th style="padding:6px 10px;border:1px solid var(--border)">Notes</th></tr></thead><tbody>`;Object.entries(rng).forEach(([sub,r])=>{h+=`<tr><td style="padding:5px 10px;border:1px solid var(--border)">${sub}</td><td style="padding:3px 5px;border:1px solid var(--border)"><input type="number" class="ei" value="${r.low}" onchange="cfg.baseRanges['${pt}']['${sub.replace(/'/g,"\\'")}'].low=parseFloat(this.value)||0" min="0" max="100" step="0.5" style="width:100%;text-align:center"></td><td style="padding:3px 5px;border:1px solid var(--border)"><input type="number" class="ei" value="${r.high}" onchange="cfg.baseRanges['${pt}']['${sub.replace(/'/g,"\\'")}'].high=parseFloat(this.value)||0" min="0" max="100" step="0.5" style="width:100%;text-align:center"></td><td style="padding:3px 5px;border:1px solid var(--border)"><input type="text" class="ei" value="${r.notes||''}" onchange="cfg.baseRanges['${pt}']['${sub.replace(/'/g,"\\'")}'].notes=this.value" placeholder="Notes"></td></tr>`;});h+=`</tbody></table></div>`;});b.innerHTML=h+`</div><div class="sticky-save"><button class="btn-g" onclick="saveSection('baseRanges',cfg.baseRanges)">Save to Server</button></div>`;}
+
+function aT3(b){const tiers=['Highest','High','Moderate','Low','Lowest'];const tc={Highest:'#FEF2F2',High:'#FFF7ED',Moderate:'#F0FDF4',Low:'#EFF6FF',Lowest:'#F5F3FF'};let h=`<div style="padding:20px">`;tiers.forEach(tier=>{const sts=Object.entries(cfg.stateAdj||{}).filter(([,v])=>v.tier===tier);if(!sts.length)return;h+=`<div style="margin-bottom:16px"><div class="sec-hdr" style="margin-bottom:8px;background:${tc[tier]||'#F8F9FA'}">${tier}</div><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:#F8F9FA"><th style="padding:6px 10px;border:1px solid var(--border)">State</th><th style="padding:6px;text-align:center;border:1px solid var(--border);width:90px">Low Adj%</th><th style="padding:6px;text-align:center;border:1px solid var(--border);width:90px">High Adj%</th><th style="padding:6px 10px;border:1px solid var(--border)">Notes</th></tr></thead><tbody>`;sts.forEach(([code,s])=>{h+=`<tr><td style="padding:5px 10px;border:1px solid var(--border);font-weight:600">${code} — ${s.name}</td><td style="padding:3px 5px;border:1px solid var(--border)"><input type="number" class="ei" value="${s.low}" onchange="cfg.stateAdj['${code}'].low=parseFloat(this.value)||0" step="0.5" style="width:100%;text-align:center"></td><td style="padding:3px 5px;border:1px solid var(--border)"><input type="number" class="ei" value="${s.high}" onchange="cfg.stateAdj['${code}'].high=parseFloat(this.value)||0" step="0.5" style="width:100%;text-align:center"></td><td style="padding:3px 5px;border:1px solid var(--border)"><input type="text" class="ei" value="${s.notes||''}" onchange="cfg.stateAdj['${code}'].notes=this.value" placeholder="Notes"></td></tr>`;});h+=`</tbody></table></div>`;});b.innerHTML=h+`</div><div class="sticky-save"><button class="btn-g" onclick="saveSection('stateAdj',cfg.stateAdj).then(()=>popStates())">Save to Server</button></div>`;}
+
+function aT4(b){let h=`<div style="padding:20px"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:#F8F9FA"><th style="padding:6px 10px;border:1px solid var(--border)">Tier</th><th style="padding:6px;text-align:center;border:1px solid var(--border);width:90px">Low Adj%</th><th style="padding:6px;text-align:center;border:1px solid var(--border);width:90px">High Adj%</th><th style="padding:6px 10px;border:1px solid var(--border)">Example Markets</th></tr></thead><tbody>`;Object.entries(cfg.metroTiers||{}).forEach(([k,t])=>{h+=`<tr><td style="padding:5px 10px;border:1px solid var(--border);font-weight:600">${t.name}</td><td style="padding:3px 5px;border:1px solid var(--border)"><input type="number" class="ei" value="${t.low}" onchange="cfg.metroTiers['${k}'].low=parseFloat(this.value)||0" step="0.5" style="width:100%;text-align:center"></td><td style="padding:3px 5px;border:1px solid var(--border)"><input type="number" class="ei" value="${t.high}" onchange="cfg.metroTiers['${k}'].high=parseFloat(this.value)||0" step="0.5" style="width:100%;text-align:center"></td><td style="padding:5px 10px;border:1px solid var(--border);font-size:11px;color:var(--muted)">${t.examples}</td></tr>`;});b.innerHTML=h+`</tbody></table></div><div class="sticky-save"><button class="btn-g" onclick="saveSection('metroTiers',cfg.metroTiers)">Save to Server</button></div>`;}
+
+function aT5(b){let h=`<div style="padding:20px"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:#F8F9FA"><th style="padding:6px 10px;border:1px solid var(--border)">Zone</th><th style="padding:6px;text-align:center;border:1px solid var(--border);width:80px">Low Adj%</th><th style="padding:6px;text-align:center;border:1px solid var(--border);width:80px">High Adj%</th><th style="padding:6px;text-align:center;border:1px solid var(--border);width:60px">Active</th><th style="padding:6px 10px;border:1px solid var(--border)">Notes</th></tr></thead><tbody>`;Object.entries(cfg.catZones||{}).forEach(([k,z])=>{h+=`<tr><td style="padding:5px 10px;border:1px solid var(--border)">${z.name}</td><td style="padding:3px 5px;border:1px solid var(--border)"><input type="number" class="ei" value="${z.low}" onchange="cfg.catZones['${k}'].low=parseFloat(this.value)||0" step="0.5" style="width:100%;text-align:center"></td><td style="padding:3px 5px;border:1px solid var(--border)"><input type="number" class="ei" value="${z.high}" onchange="cfg.catZones['${k}'].high=parseFloat(this.value)||0" step="0.5" style="width:100%;text-align:center"></td><td style="padding:3px 5px;border:1px solid var(--border);text-align:center"><input type="checkbox" ${z.active?'checked':''} onchange="cfg.catZones['${k}'].active=this.checked"></td><td style="padding:3px 5px;border:1px solid var(--border)"><input type="text" class="ei" value="${z.notes||''}" onchange="cfg.catZones['${k}'].notes=this.value"></td></tr>`;});b.innerHTML=h+`</tbody></table></div><div class="sticky-save"><button class="btn-g" onclick="saveSection('catZones',cfg.catZones)">Save to Server</button></div>`;}
+
+function aT6(b){const interp={new:'Newest — lowest deferred maint.',recent:'Modern systems — below avg',mature:'Benchmark — no adjustment',aging:'Aging systems — above avg',vintage:'Oldest stock — significant premium'};let h=`<div style="padding:20px"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:#F8F9FA"><th style="padding:6px 10px;border:1px solid var(--border)">Vintage</th><th style="padding:6px;text-align:center;border:1px solid var(--border);width:110px">Low Adj (pp)</th><th style="padding:6px;text-align:center;border:1px solid var(--border);width:110px">High Adj (pp)</th><th style="padding:6px 10px;border:1px solid var(--border)">Interpretation</th></tr></thead><tbody>`;Object.entries(cfg.vintageAdj||{}).forEach(([k,v])=>{h+=`<tr><td style="padding:5px 10px;border:1px solid var(--border);font-weight:600">${v.name}</td><td style="padding:3px 5px;border:1px solid var(--border)"><input type="number" class="ei" value="${v.low}" onchange="cfg.vintageAdj['${k}'].low=parseFloat(this.value)||0" step="0.5" style="width:100%;text-align:center"></td><td style="padding:3px 5px;border:1px solid var(--border)"><input type="number" class="ei" value="${v.high}" onchange="cfg.vintageAdj['${k}'].high=parseFloat(this.value)||0" step="0.5" style="width:100%;text-align:center"></td><td style="padding:5px 10px;border:1px solid var(--border);font-size:11px;color:var(--muted)">${interp[k]||''}</td></tr>`;});b.innerHTML=h+`</tbody></table></div><div class="sticky-save"><button class="btn-g" onclick="saveSection('vintageAdj',cfg.vintageAdj)">Save to Server</button></div>`;}
+
+function aT7(b){const cats=['taxes','insurance','management','utilities','maintenance','reserves'];const clbls={taxes:'Taxes',insurance:'Insurance',management:'Mgmt',utilities:'Utilities',maintenance:'Maint.',reserves:'Reserves'};let h=`<div style="padding:20px">`;Object.entries(cfg.allocations||{}).forEach(([pt,al])=>{const sm=cats.reduce((s,c)=>s+(parseFloat(al[c])||0),0);const ok=Math.abs(sm-100)<0.1;h+=`<div style="margin-bottom:18px"><div style="display:flex;align-items:center;gap:12px;margin-bottom:8px"><div class="sec-hdr">${pt.toUpperCase()}</div><div style="font-size:11px;font-weight:700;color:${ok?'var(--green)':'var(--red)'}" id="sum_${pt}">Sum: ${sm.toFixed(1)}% ${ok?'✓':'⚠'}</div></div><div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px">`;cats.forEach(c=>{h+=`<div><div style="font-size:10px;color:var(--muted);margin-bottom:3px">${clbls[c]}</div><div style="display:flex;align-items:center;gap:3px"><input type="number" class="ei" style="text-align:center" value="${al[c]||0}" onchange="cfg.allocations['${pt}']['${c}']=parseFloat(this.value)||0;const s=Object.values(cfg.allocations['${pt}']).reduce((a,b)=>a+b,0);const el=document.getElementById('sum_${pt}');if(el){el.textContent='Sum: '+s.toFixed(1)+'% '+(Math.abs(s-100)<0.1?'✓':'⚠');el.style.color=Math.abs(s-100)<0.1?'var(--green)':'var(--red)';}" min="0" max="100"><span style="font-size:11px;color:var(--muted)">%</span></div></div>`;});h+=`</div></div>`;});b.innerHTML=h+`</div><div class="sticky-save"><button class="btn-g" onclick="saveSection('allocations',cfg.allocations)">Save to Server</button></div>`;}
+
+function aT8(b){const n=cfg.marketNotes||{};b.innerHTML=`<div style="padding:20px"><div style="margin-bottom:14px"><div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px">&#127968; Insurance Market Notes</div><textarea class="ei" id="mn-ins" rows="4" style="padding:8px;resize:vertical;font-size:12px">${n.insurance||''}</textarea></div><div style="margin-bottom:14px"><div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px">&#9889; Utility Trends</div><textarea class="ei" id="mn-utl" rows="4" style="padding:8px;resize:vertical;font-size:12px">${n.utilities||''}</textarea></div><div style="margin-bottom:14px"><div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px">&#128203; Property Tax Environment</div><textarea class="ei" id="mn-tax" rows="4" style="padding:8px;resize:vertical;font-size:12px">${n.propertyTax||''}</textarea></div><div style="margin-bottom:14px"><div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px">&#128295; Maintenance / Labor</div><textarea class="ei" id="mn-mnt" rows="4" style="padding:8px;resize:vertical;font-size:12px">${n.maintenance||''}</textarea></div></div><div class="sticky-save"><button class="btn-g" onclick="(async()=>{const v={insurance:document.getElementById('mn-ins').value,utilities:document.getElementById('mn-utl').value,propertyTax:document.getElementById('mn-tax').value,maintenance:document.getElementById('mn-mnt').value};await saveSection('marketNotes',v);cfg.marketNotes=v;renderMktNotes();})()">Save to Server</button></div>`;}
+
+function aT9(b){b.innerHTML=`<div style="padding:20px"><div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px"><div class="card" style="padding:14px"><div style="font-size:13px;font-weight:700;color:var(--teal);margin-bottom:5px">&#128228; Export Config</div><div style="font-size:11px;color:var(--muted);margin-bottom:10px">Download current server config as JSON backup.</div><button class="btn-g" onclick="expData()">Export JSON</button></div><div class="card" style="padding:14px"><div style="font-size:13px;font-weight:700;color:var(--teal);margin-bottom:5px">&#128229; Import Config</div><div style="font-size:11px;color:var(--muted);margin-bottom:10px">Upload JSON to restore or share configuration.</div><input type="file" id="imp-f" accept=".json" style="display:none" onchange="impData(event)"><button class="btn-t" onclick="document.getElementById('imp-f').click()">Import JSON</button></div></div><div style="padding:14px;background:#F0F7FF;border-radius:6px;border:1px solid #BFDBFE;margin-bottom:16px"><div style="font-size:12px;font-weight:700;color:#1D4ED8;margin-bottom:6px">&#9729; Server Config URL</div><div style="font-family:monospace;font-size:12px;color:#1E40AF;word-break:break-all">${window.location.origin}/api/config</div><div style="font-size:11px;color:#1D4ED8;margin-top:4px">Your external software can GET this URL to always fetch the latest config.</div></div></div>`;}
+function expData(){const d={exported:new Date().toISOString(),...cfg};const bl=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const url=URL.createObjectURL(bl);const a=document.createElement('a');a.href=url;a.download=`oer-config-${(cfg.dataCurrency||{}).quarter||''}${(cfg.dataCurrency||{}).year||''}.json`;a.click();URL.revokeObjectURL(url);toast('Exported','ok');}
+async function impData(e){const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=async ev=>{try{const d=JSON.parse(ev.target.result);if(!confirm('Import this config to server?'))return;await fetch('/api/config',{method:'PUT',headers:{'Content-Type':'application/json','x-admin-password':document.getElementById('admin-pwd').value},body:JSON.stringify({fullConfig:d})});cfg=d;popStates();calc();renderMktNotes();updBadge();toast('Imported','ok');}catch(er){toast('Import failed: '+er.message,'err');}};rd.readAsText(f);}
+
+function aT10(b){const mos=mosSince((cfg.dataCurrency||{}).lastUpdated);const nd=new Date((cfg.dataCurrency||{}).lastUpdated||Date.now());nd.setMonth(nd.getMonth()+3);const days=Math.ceil((nd-new Date())/86400000);b.innerHTML=`<div style="padding:20px"><div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px"><div class="card" style="padding:14px;text-align:center"><div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Next Update Due</div><div style="font-size:28px;font-weight:800;color:${days<0?'var(--red)':days<14?'var(--orange)':'var(--teal)'}">${days<0?Math.abs(days)+'d overdue':days+'d'}</div><div style="font-size:12px;color:var(--muted);margin-top:4px">${nd.toLocaleDateString()}</div></div><div class="card" style="padding:14px"><div style="font-size:12px;font-weight:700;color:var(--teal);margin-bottom:6px">Your API Endpoint</div><div style="font-family:monospace;font-size:11px;background:#F8F9FA;padding:10px;border-radius:5px;word-break:break-all;color:var(--teal)">${window.location.origin}/api/calculate</div><div style="font-size:11px;color:var(--muted);margin-top:6px">POST with x-api-key header. See API Quick Reference on dashboard.</div></div></div></div>`;}
+
+// ============================================================
+// INIT — load config from server, then boot UI
+// ============================================================
+async function init(){
+  const ok = await loadServerConfig();
+  if (!ok) {
+    document.getElementById('load-status').textContent = 'Using Q2 2026 defaults (no server config)';
+    // Init with inline defaults if server and cache both fail
+    await new Promise(r => setTimeout(r, 1500));
+  }
+  document.getElementById('loading-screen').style.display = 'none';
+  popStates();
+  document.getElementById('f-pt').value = 'multifamily';
+  onPtChange();
+  setTimeout(() => {
+    const st = document.getElementById('f-sub');
+    for (let o of st.options) { if (o.text.includes('Class B (built 1980')) { st.value = o.value; break; } }
+    document.getElementById('f-state').value = 'TX';
+    document.getElementById('f-metro').value = 't3';
+    document.getElementById('f-sm').value = 'suburban_prime';
+    document.getElementById('f-cat').value = 'none';
+    document.getElementById('f-vint').value = 'mature';
+    document.getElementById('f-cls').value = 'medium';
+    calc(); renderMktNotes(); updBadge(); loadSaved();
+  }, 60);
+  document.addEventListener('keydown', e => {
+    if ((e.metaKey||e.ctrlKey) && e.key === ',') { e.preventDefault(); openAdmin(); }
+    if (e.key === 'Escape') { closeAdmin(); ['conf-modal','save-modal'].forEach(id=>document.getElementById(id).style.display='none'); }
+    if ((e.metaKey||e.ctrlKey) && e.key === 's') { e.preventDefault(); saveAnalysis(); }
+  });
+}
+init();
+</script>
+</body>
+</html>
