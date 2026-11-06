@@ -384,8 +384,9 @@ function calc(){
   if (!cfg.baseRanges) return;
   const rng = cfg.baseRanges[pt]; if (!rng || !rng[sub]) return;
   const base = rng[sub];
-  const saAdj  = (cfg.stateAdj||{})[st]  || { low:0, high:0 };
-  const mtAdj  = (cfg.metroTiers||{})[mt] || { low:0, high:0 };
+  const embeds = !!base.embedsLocation; // base already carries this market's state and metro costs
+  const saAdj  = embeds ? { low:0, high:0 } : ((cfg.stateAdj||{})[st]  || { low:0, high:0 });
+  const mtAdj  = embeds ? { low:0, high:0 } : ((cfg.metroTiers||{})[mt] || { low:0, high:0 });
   const smAdj  = (cfg.submarkets||{})[sm] || { low:0, high:0 };
   const catAdj = (cfg.catZones||{})[cat]  || { low:2, high:3 };
   const vaAdj  = (cfg.vintageAdj||{})[vnt]|| { low:0, high:0 };
