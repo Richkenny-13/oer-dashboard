@@ -364,7 +364,7 @@ function popStates(){
 function onPtChange(){
   const pt = document.getElementById('f-pt').value;
   const r = (cfg.baseRanges||{})[pt] || {};
-  document.getElementById('f-sub').innerHTML = Object.keys(r).map(k=>`<option value="${k}">${k}</option>`).join('');
+  document.getElementById('f-sub').innerHTML = Object.keys(r).map(k=>`<option value="${k}">${k}${r[k].review?' — under review':''}</option>`).join('');
   calc();
 }
 
@@ -483,7 +483,7 @@ function renderMktNotes(){
   document.getElementById('mkt-notes').innerHTML=items.map(i=>`<div style="background:#F8F9FA;border:1px solid var(--border);border-radius:6px;padding:12px"><div style="font-size:12px;font-weight:700;color:var(--teal);margin-bottom:5px">${i.ic} ${i.t}</div><div style="font-size:11px;color:var(--muted);line-height:1.5">${i.tx}</div></div>`).join('');
   // Per-asset-class data vintage line in the disclaimer bar
   const v=dc.vintage||{}, vl=document.getElementById('vintage-line');
-  if(vl){const parts=Object.entries(v).map(([k,x])=>`${k} ${x.asOf||'?'}${x.status==='stale'?' (stale)':''}`);vl.textContent=parts.length?`Data vintage by asset class: ${parts.join('; ')}.`:'';}
+  if(vl){const parts=Object.entries(v).map(([k,x])=>`${k} ${x.asOf||'?'}${x.status==='stale'?' (stale)':x.status==='review'?' (ranges under review)':''}`);vl.textContent=parts.length?`Data vintage by asset class: ${parts.join('; ')}.`:'';}
   // Known open items carried by the current deployment
   const oi=document.getElementById('open-items'), list=cfg.openItems||[];
   if(oi){if(list.length){oi.style.display='block';oi.innerHTML=`<div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:5px">Known open items (${list.length})</div><ul style="margin:0;padding-left:18px;font-size:11px;color:#92400E;line-height:1.5">${list.map(t=>`<li>${t}</li>`).join('')}</ul>`;}else{oi.style.display='none';}}
