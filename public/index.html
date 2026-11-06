@@ -80,7 +80,7 @@ main{padding:16px 20px;max-width:1400px;margin:0 auto}
         <div style="width:1px;height:32px;background:rgba(255,255,255,.2)"></div>
         <div id="data-badge" class="badge badge-g" style="cursor:pointer" onclick="openAdmin(0)">
           <span id="dbdot" style="width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block"></span>
-          <span id="dbtext">Q2 2026 — Loading...</span>
+          <span id="dbtext">Loading...</span>
         </div>
         <div id="sync-badge" style="display:none" class="badge" style="font-size:10px">&#9729; Synced</div>
       </div>
@@ -153,7 +153,7 @@ main{padding:16px 20px;max-width:1400px;margin:0 auto}
     </div>
   </div>
   <div style="background:#FFFBEB;border-top:1px solid #FDE68A;padding:6px 20px">
-    <span style="font-size:11px;color:#92400E"><strong>Disclaimer:</strong> Ratios exclude payroll, benefits, and debt service. Expressed as % of EGI. Verify against current IREM/BOMA reports for final underwriting.</span>
+    <span style="font-size:11px;color:#92400E"><strong>Disclaimer:</strong> Ratios exclude payroll, benefits, and debt service. Expressed as % of EGI. <span id="vintage-line"></span> Verify against current BOMA EER and comparable filings for final underwriting. (IREM Income/Expense IQ was retired 2025-12-31 and is no longer a current source.)</span>
   </div>
 </div>
 
@@ -174,8 +174,10 @@ main{padding:16px 20px;max-width:1400px;margin:0 auto}
 </div>
 
 <div class="card" style="padding:16px;margin-bottom:16px">
-  <div style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">Q2 2026 Market Conditions</div>
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px" id="mkt-notes"></div>
+  <div id="mkt-hdr" style="font-size:12px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">Market Conditions</div>
+  <div id="mkt-direction" style="display:none;background:#F0F7FF;border:1px solid #BFDBFE;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:#1E3A8A;line-height:1.5"></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px" id="mkt-notes"></div>
+  <div id="open-items" style="display:none;margin-top:12px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:10px 12px"></div>
 </div>
 
 <!-- API Docs Quick Reference -->
@@ -471,9 +473,20 @@ function renderCmp(r){
 }
 
 function renderMktNotes(){
-  const n=cfg.marketNotes||{};
+  const n=cfg.marketNotes||{}, dc=cfg.dataCurrency||{};
+  const q=dc.quarter||'Q?', y=dc.year||'';
+  document.getElementById('mkt-hdr').textContent=`${q} ${y} Market Conditions`;
+  const dir=document.getElementById('mkt-direction');
+  if(n.direction){dir.style.display='block';dir.innerHTML=`<strong>Net direction:</strong> ${n.direction}`;}else{dir.style.display='none';}
   const items=[{ic:'🏠',t:'Insurance Market',tx:n.insurance||''},{ic:'⚡',t:'Utility Trends',tx:n.utilities||''},{ic:'📋',t:'Property Tax',tx:n.propertyTax||''},{ic:'🔧',t:'Maintenance',tx:n.maintenance||''}];
+  if(n.payroll)items.push({ic:'👥',t:'Payroll (context only — excluded)',tx:n.payroll});
   document.getElementById('mkt-notes').innerHTML=items.map(i=>`<div style="background:#F8F9FA;border:1px solid var(--border);border-radius:6px;padding:12px"><div style="font-size:12px;font-weight:700;color:var(--teal);margin-bottom:5px">${i.ic} ${i.t}</div><div style="font-size:11px;color:var(--muted);line-height:1.5">${i.tx}</div></div>`).join('');
+  // Per-asset-class data vintage line in the disclaimer bar
+  const v=dc.vintage||{}, vl=document.getElementById('vintage-line');
+  if(vl){const parts=Object.entries(v).map(([k,x])=>`${k} ${x.asOf||'?'}${x.status==='stale'?' (stale)':''}`);vl.textContent=parts.length?`Data vintage by asset class: ${parts.join('; ')}.`:'';}
+  // Known open items carried by the current deployment
+  const oi=document.getElementById('open-items'), list=cfg.openItems||[];
+  if(oi){if(list.length){oi.style.display='block';oi.innerHTML=`<div style="font-size:11px;font-weight:700;color:#92400E;margin-bottom:5px">Known open items (${list.length})</div><ul style="margin:0;padding-left:18px;font-size:11px;color:#92400E;line-height:1.5">${list.map(t=>`<li>${t}</li>`).join('')}</ul>`;}else{oi.style.display='none';}}
 }
 
 function updBadge(m){
@@ -571,7 +584,7 @@ function aT10(b){const mos=mosSince((cfg.dataCurrency||{}).lastUpdated);const nd
 async function init(){
   const ok = await loadServerConfig();
   if (!ok) {
-    document.getElementById('load-status').textContent = 'Using Q2 2026 defaults (no server config)';
+    document.getElementById('load-status').textContent = 'Using built-in defaults (no server config)';
     // Init with inline defaults if server and cache both fail
     await new Promise(r => setTimeout(r, 1500));
   }

@@ -1,5 +1,5 @@
 const DEFAULTS = require('../lib/defaults');
-const { getConfig, updateConfigSection, setConfig } = require('../lib/storage');
+const { getConfig, updateConfigSection, setConfig, resetConfig } = require('../lib/storage');
 
 function isAdmin(req) {
   const pwd = process.env.ADMIN_PASSWORD;
@@ -46,6 +46,27 @@ module.exports = async (req, res) => {
       } else {
         res.status(400).json({ error: 'Body must contain { key, value } or { fullConfig }' });
       }
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+    return;
+  }
+
+  // DELETE — requires admin auth. Clears the cached Redis config so the config
+  // reverts to the defaults shipped in the current deployment.
+  if (req.method === 'DELETE') {
+    if (!isAdmin(req)) return res.status(401).json({ error: 'Admin authentication required (x-admin-password header)' });
+    try {
+      await resetConfig();
+      const config = await getConfig(DEFAULTS);
+      const { _source, ...clean } = config;
+      res.status(200).json({
+        success: true,
+        mode: 'reset-to-deployed-defaults',
+        source: _source,
+        dataCurrency: clean.dataCurrency,
+        resetAt: new Date().toISOString()
+      });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

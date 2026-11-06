@@ -163,9 +163,19 @@ in
 
 ---
 
-## Updating Config After Deployment
+## Quarterly Data Refresh (the normal path)
 
-When Q3 2026 data is ready, you have two options:
+Each quarter the baseline in `lib/defaults.js` is rewritten from the latest filings and released by a push to `main`:
+
+1. Edit `lib/defaults.js`: `dataCurrency` (quarter, year, `lastUpdated`, source line, per-asset-class vintage), `baseRanges` where evidence supports a change, `allocations`, `marketNotes`, `openItems`.
+2. Commit and push (see "Redeploy After Code Changes"). Vercel deploys in about a minute.
+3. Nothing else is needed. Since the Q4 2026 refresh, a deployed `dataCurrency.lastUpdated` that is newer than the cached Redis config makes the deployed data win, so a stale cache can no longer mask a refresh and no admin password is needed to clear it. If Redis is unreachable or deleted, every endpoint serves the deployed defaults instead of failing.
+
+Refresh history: Q2 2026 (initial, 2026-05-06) · Q3 2026 multifamily pass (2026-07-30, never deployed) · Q4 2026 (2026-11-06: Q3 2026 filings, multifamily split re-derived, all sectors re-dated, Redis fallback added).
+
+## Updating Config Between Refreshes
+
+For a one-off edit between quarterly refreshes, you have two options:
 
 **Option A — Admin Panel (easiest):**
 1. Open the dashboard → Ctrl+, → unlock with password
@@ -230,6 +240,7 @@ To rotate any key: Vercel Dashboard → Settings → Environment Variables → u
 | Issue | Fix |
 |---|---|
 | Dashboard shows "Loading config..." forever | Check Vercel function logs; verify Upstash env vars are set |
+| `/api/health` shows `storageReachable: false` | Upstash database is gone or paused; the site keeps serving the deployed defaults. Recreate the database and update the two env vars only if admin-panel edits are needed again |
 | Admin save says "Failed" | Verify `ADMIN_PASSWORD` env var matches what you typed |
 | API returns 401 Unauthorized | Check `x-api-key` header matches `API_KEY` env var |
 | Config reverts after admin save | Check Upstash dashboard — free tier limit is 10k commands/day |
@@ -250,4 +261,4 @@ To rotate any key: Vercel Dashboard → Settings → Environment Variables → u
 
 ---
 
-*Falcon Capital | Keystone Valuations | OER Dashboard v1.0 | Q2 2026*
+*Falcon Capital | Keystone Valuations | OER Dashboard v1.1 | Q4 2026 data (refreshed 2026-11-06)*
