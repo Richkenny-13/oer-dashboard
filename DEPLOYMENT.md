@@ -171,7 +171,7 @@ Each quarter the baseline in `lib/defaults.js` is rewritten from the latest fili
 2. Commit and push (see "Redeploy After Code Changes"). Vercel deploys in about a minute.
 3. Nothing else is needed. Since the Q4 2026 refresh, a deployed `dataCurrency.lastUpdated` that is newer than the cached Redis config makes the deployed data win, so a stale cache can no longer mask a refresh and no admin password is needed to clear it. If Redis is unreachable or deleted, every endpoint serves the deployed defaults instead of failing.
 
-Refresh history: Q2 2026 (initial, 2026-05-06) · Q3 2026 multifamily pass (2026-07-30, never deployed) · Q4 2026 (2026-11-06: Q3 2026 filings, multifamily split re-derived, all sectors re-dated, Redis fallback added; same day: retail and hospitality ranges recalibrated from FY2025 10-Ks, office allocation re-derived from Income/Expense IQ 2024 data, office base ranges adopted from FY2025 10-K ratios with a new NYC Trophy subtype, quarterly refresh routine scheduled for the 10th of Feb/May/Aug/Nov).
+Refresh history: Q2 2026 (initial, 2026-05-06) · Q3 2026 multifamily pass (2026-07-30, never deployed) · Q4 2026 (2026-11-06: Q3 2026 filings, multifamily split re-derived, all sectors re-dated, Redis fallback added; same day: retail and hospitality ranges recalibrated from FY2025 10-Ks, office allocation re-derived from Income/Expense IQ 2024 data, office base ranges adopted from FY2025 10-K ratios with a new NYC Trophy subtype, quarterly refresh routine scheduled for the 10th of Feb/May/Aug/Nov; gateway adjustments cut; senior housing recalibrated with a seventh food category).
 
 ## Updating Config Between Refreshes
 
